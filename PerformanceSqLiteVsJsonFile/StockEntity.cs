@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace PerformanceSqLiteVsJsonFile
 {
     public class StockEntity
     {
-        [Key]
+        [Key, BsonId]
         public Guid Id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }

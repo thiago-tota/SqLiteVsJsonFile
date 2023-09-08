@@ -1,4 +1,8 @@
 ﻿using BenchmarkDotNet.Attributes;
+using DnsClient.Protocol;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using System.Text.Json;
 
 namespace PerformanceSqLiteVsJsonFile
@@ -38,7 +42,6 @@ namespace PerformanceSqLiteVsJsonFile
             return dbContext.Stocks.FirstOrDefault(s => s.Code == SearchFor);
         }
 
-
         [Benchmark]
         public void PersistDataIntoJsonFile()
         {
@@ -55,7 +58,7 @@ namespace PerformanceSqLiteVsJsonFile
         }
 
         [Benchmark]
-        public StockEntity? SearchByCodeFromJsonFileFileStream()
+        public StockEntity? SearchByCodeFromJsonFileStream()
         {
             var stocks = new List<StockEntity>();
             using FileStream fs = File.OpenRead("DbStocks.json");
@@ -70,6 +73,33 @@ namespace PerformanceSqLiteVsJsonFile
             }
 
             return stocks.FirstOrDefault();
+        }
+
+        const string _mondoDbUrl = "mongodb://localhost:3017";
+        const string _mongoDatabaseName = "MongoDbStocks";
+        const string _mongoCollectionName = "StockCollection";
+
+        [Benchmark]
+        public void PersistDataIntoMongoDb()
+        {
+            var mongoClient = new MongoClient(_mondoDbUrl);
+            var mongoDatabase = mongoClient.GetDatabase(_mongoDatabaseName);
+            var mongoCollection = mongoDatabase.GetCollection<BsonDocument>(_mongoCollectionName);
+
+            var bsonDocuments = stocks.Select(r => r.ToBsonDocument());
+            mongoCollection.InsertMany(bsonDocuments);
+        }
+
+        [Benchmark]
+        public StockEntity? SearchByCodeFromMongoDb()
+        {
+            var mongoClient = new MongoClient(_mondoDbUrl);
+            var mongoDatabase = mongoClient.GetDatabase(_mongoDatabaseName);
+            var mongoCollection = mongoDatabase.GetCollection<BsonDocument>(_mongoCollectionName);
+
+            var filter = Builders<BsonDocument>.Filter.Eq("Code", SearchFor);
+            var r = mongoCollection.Find(filter).First();
+            return BsonSerializer.Deserialize<StockEntity>(r);
         }
 
         private List<StockEntity> GenerateRandomStocks(int count)

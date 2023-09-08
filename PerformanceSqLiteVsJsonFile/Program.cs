@@ -6,8 +6,8 @@ internal class Program
 {
     public static void Main(string[] args)
     {
-        //NugetBenchmark();
-        ManualBenchmark();
+        NugetBenchmark();
+        //ManualBenchmark();
     }
 
     static void NugetBenchmark()
@@ -35,6 +35,11 @@ internal class Program
         time.Stop();
         Console.WriteLine($"Data persisted into JSON file successfully in {time.Elapsed}!");
 
+        Console.WriteLine("Starting data persist into MongoDB!");
+        time.Restart();
+        data.PersistDataIntoMongoDb();
+        time.Stop();
+        Console.WriteLine($"Data persisted into MongoDB successfully in {time.Elapsed}!");
 
         Console.WriteLine("Starting search into SQLite database!");
         time.Restart();
@@ -64,7 +69,7 @@ internal class Program
 
         Console.WriteLine("Starting search into Json file!");
         time.Restart();
-        data.SearchByCodeFromJsonFileFileStream();
+        data.SearchByCodeFromJsonFileStream();
         time.Stop();
         if (stock != null)
         {
@@ -73,6 +78,19 @@ internal class Program
         else
         {
             Console.WriteLine($"Stock not found in Json file using FileStream in {time.Elapsed}!");
+        }
+
+        Console.WriteLine("Starting search into MongoDB!");
+        time.Restart();
+        data.SearchByCodeFromMongoDb();
+        time.Stop();
+        if (stock != null)
+        {
+            Console.WriteLine($"Stock found in MongoDB - Code: {stock.Code}, Name: {stock.Name} in {time.Elapsed}!");
+        }
+        else
+        {
+            Console.WriteLine($"Stock not found in MongoDB in {time.Elapsed}!");
         }
     }
 }
